@@ -3,6 +3,7 @@
 
 [![image](https://img.shields.io/pypi/v/hagerstrand.svg)](https://pypi.python.org/pypi/hagerstrand)
 [![image](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![image](https://pepy.tech/badge/hagerstrand)](https://pepy.tech/project/hagerstrand)
 
 
 **A Python package for an interactive space-time Geographic Information System (GIS)**
