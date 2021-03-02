@@ -46,3 +46,5 @@ nav:
     - Report Issues: https://github.com/jimmy-feng/hagerstrand/issues
     - API Reference:
           - hagerstrand module: hagerstrand.md
+    - Notebooks:
+          - notebooks/Basic_Mapping.ipynb
