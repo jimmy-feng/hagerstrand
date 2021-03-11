@@ -3,6 +3,7 @@ import os
 import ipyleaflet
 from ipyleaflet import FullScreenControl, LayersControl, DrawControl, MeasureControl, ScaleControl, TileLayer, basemaps, basemap_to_tiles
 
+# Credit: Dr. Qiusheng Wu
 class Map(ipyleaflet.Map):
 
     def __init__(self, **kwargs):
@@ -93,6 +94,7 @@ class Map(ipyleaflet.Map):
         geo_json = ipyleaflet.GeoJSON(data=data, style=style, name=layer_name)
         self.add_layer(geo_json) 
 
+# Credit: Dr. Qiusheng Wu
     def add_shapefile(self, in_shp, style=None, layer_name="Untitled"):
 
         geojson = shp_to_geojson(in_shp)
@@ -103,6 +105,7 @@ class Map(ipyleaflet.Map):
         geojson = gmapjson_to_geojson(in_json)
         self.add_geojson(geojson, style=style, layer_name=layer_name)
 
+# Credit: Dr. Qiusheng Wu
 def shp_to_geojson(in_shp, out_geojson=None):
 
     import json
