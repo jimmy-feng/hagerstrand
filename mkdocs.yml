@@ -48,3 +48,4 @@ nav:
           - hagerstrand module: hagerstrand.md
     - Notebooks:
           - notebooks/Basic_Mapping.ipynb
+          - notebooks/convert_json_to_geojson.ipynb
