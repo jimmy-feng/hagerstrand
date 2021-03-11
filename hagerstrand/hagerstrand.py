@@ -1,7 +1,7 @@
 """Main module."""
 import os
 import ipyleaflet
-from ipyleaflet import FullScreenControl, LayersControl, DrawControl, MeasureControl, ScaleControl, TileLayer, basemaps, basemaps_to_tiles
+from ipyleaflet import FullScreenControl, LayersControl, DrawControl, MeasureControl, ScaleControl, TileLayer, basemaps, basemap_to_tiles
 
 class Map(ipyleaflet.Map):
 
