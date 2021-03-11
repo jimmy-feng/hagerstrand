@@ -29,12 +29,6 @@ class Map(ipyleaflet.Map):
         self.add_control(MeasureControl())
         self.add_control(ScaleControl(position="bottomleft"))
 
-        if "basemap" not in kwargs:
-            layer = basemap_to_tiles(basemaps.OpenStreetMap.Mapnik)
-            self.add_layer(layer)
-        else:
-            layer = basemap_to_tiles(kwargs["basemap"])
-            self.add_layer(layer)
 
         if "google_map" not in kwargs:
             layer = TileLayer(
@@ -58,6 +52,14 @@ class Map(ipyleaflet.Map):
                     name="Google Satellite"
                 )
                 self.add_layer(layer)
+
+        if "basemap" not in kwargs:
+            layer = basemap_to_tiles(basemaps.OpenStreetMap.Mapnik)
+            self.add_layer(layer)
+        else:
+            layer = basemap_to_tiles(kwargs["basemap"])
+            self.add_layer(layer)
+
 
     def add_geojson(self, in_geojson, style=None, layer_name="Untitled"):
 
@@ -96,6 +98,10 @@ class Map(ipyleaflet.Map):
         geojson = shp_to_geojson(in_shp)
         self.add_geojson(geojson, style=style, layer_name=layer_name)
 
+    def add_gmapjson(self, in_json, style=None, layer_name="Untitled"):
+
+        geojson = gmapjson_to_geojson(in_json)
+        self.add_geojson(geojson, style=style, layer_name=layer_name)
 
 def shp_to_geojson(in_shp, out_geojson=None):
 
@@ -120,38 +126,47 @@ def shp_to_geojson(in_shp, out_geojson=None):
         with open(out_geojson, "w") as f:
             f.write(json.dumps(geojson))    
 
-
-def json_to_geojson(in_json, out_geojson=None):
+def gmapjson_to_geojson(in_gmapjson, out_gmapgeojson=None):
 
     import json
+    import datetime
     
-    in_json = os.path.abspath(in_json)
+    in_gmapjson = os.path.abspath(in_gmapjson)
 
-    if not os.path.exists(in_json):
-        raise FileNotFoundError("The provided json could not be found.")
+    if not os.path.exists(in_gmapjson):
+       raise FileNotFoundError("The provided json could not be found.")
 
-    data = json.load(open(in_json))
+    with open(in_gmapjson) as f:
+        data = json.load(f)
+    
+    for item in data["locations"]:
+        item["latitudeE7"] = item["latitudeE7"] * 0.0000001
+        item["longitudeE7"] = item["longitudeE7"] * 0.0000001
+        item["timestampMs"] = datetime.datetime.fromtimestamp(int(item["timestampMs"])/1000.0)
+        item["timestampMs"] = item["timestampMs"].strftime('%Y-%m-%d %H:%M:%S') 
+    
+    data_intermediate = data["locations"]
 
     geojson = {
         "type": "FeatureCollection",
         "features": [
-            {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [d["longitudeE7"], d["latitudeE7"]],
+        {
+            "type": "Feature",
+            "geometry" : {
+                "type": "Point",
+                "coordinates": [d["longitudeE7"], d["latitudeE7"]],
                 },
-                "properties": d,
-            } for d in data]
+            "properties" : d,
+        } for d in data_intermediate]
     }
 
-    if out_geojson is None:
+    if out_gmapgeojson is None:
         return geojson
     else:
-        out_geojson = os.path.abspath(out_geojson)
-        out_dir = os.path.dirname(out_geojson)
+        out_gmapgeojson = os.path.abspath(out_gmapgeojson)
+        out_dir = os.path.dirname(out_gmapgeojson)
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        with open(out_geojson, "w") as f:
+        with open(out_gmapgeojson, "w") as f:
             f.write(json.dumps(geojson)) 
 
