@@ -2,5 +2,3 @@ folium
 ipyleaflet
 pyshp
 pandas
-json
-datetime
