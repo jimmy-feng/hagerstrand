@@ -49,3 +49,4 @@ nav:
     - Notebooks:
           - notebooks/Basic_Mapping.ipynb
           - notebooks/convert_json_to_geojson.ipynb
+          - notebooks/Safegraph.ipynb
