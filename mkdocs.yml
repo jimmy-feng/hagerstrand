@@ -13,8 +13,8 @@ theme:
     features:
         - navigation.instant
         - search.highlight
-        # - navigation.expand
-        # - navigation.tabs
+         - navigation.expand
+         - navigation.tabs
     custom_dir: "docs/overrides"
 
 plugins:
@@ -46,6 +46,7 @@ nav:
     - Report Issues: https://github.com/jimmy-feng/hagerstrand/issues
     - API Reference:
           - hagerstrand module: hagerstrand.md
+          - dataprocess module: dataprocess.md
     - Notebooks:
           - notebooks/Basic_Mapping.ipynb
           - notebooks/convert_json_to_geojson.ipynb

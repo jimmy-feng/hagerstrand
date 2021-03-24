@@ -1,9 +1,12 @@
 import pandas as pd
 import json
 
-#@pd.api.extensions.register_dataframe_accessor("dataprocess")
 class ExtendedDataFrame(pd.DataFrame):
+    """This ExtendedDataFrame class inherits the pandas DataFrame class
 
+    Args:
+        pd (pd.DataFrame()): A pandas DataFrame
+    """
     def __init__(self, *args, **kwargs):    
         super(ExtendedDataFrame, self).__init__(*args, **kwargs)   
     
@@ -12,8 +15,14 @@ class ExtendedDataFrame(pd.DataFrame):
         return ExtendedDataFrame
 
     def deduplicate(self, columns=None):
-        # Drop duplicate rows and reset index
+        """Drops duplicate records and resets the index of the ExtendedDataFrame
 
+        Args:
+            columns (list, optional): Columns for which to identify dupulicate records. Defaults to None.
+
+        Returns:
+            ExtendedDataFrame: A de-deuplicated ExtendedDataFrame with the index reset.
+        """    
         if columns==None:
             df = self.drop_duplicates()
             df = df.reset_index(drop=True)
@@ -24,12 +33,20 @@ class ExtendedDataFrame(pd.DataFrame):
             return df
 
     def jsoncol_newdf(self):
-        # Unpack a JSON column and return a new DataFrame
+        """Unpack a JSON column and return a new ExtendedDataFrame
+
+        Returns:
+            ExtendedDataFrame: A new ExtendedDataFrame of an unpacked JSON column.
+        """        
         df = unpack_json(self)
         return df
 
     def jsoncol_merge(self):
-        # Unpack a JSON column and merge to the existing DataFrame
+        """Unpack a JSON column and merge to the existing DataFrame
+
+        Returns:
+            ExtendedDataFrame: A new ExtendedDataFrame that includes the original DataFrame and the unpacked JSON column.
+        """        
         df = unpack_json_and_merge(self)
         return df
      
@@ -37,12 +54,32 @@ class ExtendedDataFrame(pd.DataFrame):
 # THE FOLLOWING FUNCTIONS ARE MODIFIED FROM https://github.com/SafeGraphInc/safegraph_py
 
 def load_json_nan(df, json_col):
-  return df[json_col].apply(lambda x: json.loads(x) if type(x) == str else x)
+    """Load a JSON file even if there are NaNs.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the JSON column to be loaded.
+        json_col (str): The JSON column to be loaded.
+
+    Returns:
+        [type]: [description]
+    """    
+    return df[json_col].apply(lambda x: json.loads(x) if type(x) == str else x)
 
 
 def unpack_json(df, json_column='visitor_home_cbgs', index_name= None, key_col_name=None,
                          value_col_name=None):
-    
+    """Unpack a JSON column from a SafeGraph Patterns dataset.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the JSON column to be unpacked.
+        json_column (str, optional): JSON column to be unpacked. Defaults to 'visitor_home_cbgs'.
+        index_name (str, optional): Index name for new ExtendedDataFrame. Defaults to None.
+        key_col_name (str, optional): Key name for new ExtendedDataFrame. Defaults to None.
+        value_col_name (str, optional): Value name for new ExtendedDataFrame. Defaults to None.
+
+    Returns:
+        pd.DataFrame: DataFrame of an unpacked JSON column.
+    """    
     import numpy as np
     
     # these checks are a inefficent for multithreading, but it's not a big deal
@@ -78,8 +115,20 @@ def unpack_json(df, json_column='visitor_home_cbgs', index_name= None, key_col_n
     return all_sgpid_cbg_data
 
 
-def unpack_json_and_merge(df, json_column='visitor_home_cbgs', key_col_name=None,
-                         value_col_name=None, keep_index=False):
+def unpack_json_and_merge(df, json_column='visitor_home_cbgs', key_col_name='visitor_home_cbg',
+                         value_col_name='cbg_visitor_name', keep_index=False):
+    """Unpack a JSON column from a SafeGraph Patterns dataset.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the JSON column to be unpacked
+        json_column (str, optional): JSON column to be unpacked. Defaults to 'visitor_home_cbgs'.
+        key_col_name (str, optional): Key name for new ExtendedDataFrame. Defaults to 'visitor_home_cbg'.
+        value_col_name (str, optional): Value name for new ExtendedDataFrame. Defaults to 'cbg_visitor_name'.
+        keep_index (bool, optional): Keep or do not keep the original index. Defaults to False.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the original DataFrame and the unpacked JSON column as additional columns.
+    """
     if (keep_index):
         df['index_original'] = df.index
     df.reset_index(drop=True, inplace=True)  # Every row must have a unique index
