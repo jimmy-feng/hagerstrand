@@ -4,14 +4,15 @@
 [![image](https://img.shields.io/pypi/v/hagerstrand.svg)](https://pypi.python.org/pypi/hagerstrand)
 [![image](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![image](https://pepy.tech/badge/hagerstrand)](https://pepy.tech/project/hagerstrand)
-
+[![image](https://img.shields.io/conda/vn/conda-forge/hagerstrand.svg)](https://anaconda.org/conda-forge/hagerstrand)
 
 **A Python package for an interactive space-time Geographic Information System (GIS)**
 
 
-- GitHub repo: https://github.com/jimmy-feng/hagerstrand
--   Documentation: https://jimmy-feng.github.io/hagerstrand
-- PyPI: https://pypi.org/project/hagerstrand
+- GitHub repo: [https://github.com/jimmy-feng/hagerstrand](https://github.com/jimmy-feng/hagerstrand)
+-   Documentation: [https://jimmy-feng.github.io/hagerstrand](https://jimmy-feng.github.io/hagerstrand)
+- PyPI: [https://pypi.org/project/hagerstrand](https://pypi.org/project/hagerstrand)
+- Conda-forge: [https://anaconda.org/conda-forge/hagerstrand](https://anaconda.org/conda-forge/hagerstrand)
 -   Free software: MIT license
     
 
@@ -20,6 +21,26 @@
 
 ## Installation
 `pip install hagerstrand`
+
+==============================================
+
+Installing `hagerstrand` from the `conda-forge` channel can be achieved by adding `conda-forge` to your channels with:
+
+```
+conda config --add channels conda-forge
+```
+
+Once the `conda-forge` channel has been enabled, `hagerstrand` can be installed with:
+
+```
+conda install hagerstrand
+```
+
+It is possible to list all of the versions of `hagerstrand` available on your platform with:
+
+```
+conda search hagerstrand --channel conda-forge
+```
 ## Features
 
 -   In the works!
