@@ -2,3 +2,4 @@ folium
 ipyleaflet
 pyshp
 pandas
+earthengine-api
