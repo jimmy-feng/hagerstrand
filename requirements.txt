@@ -3,3 +3,4 @@ ipyleaflet
 pyshp
 pandas
 earthengine-api
+scikit-learn
