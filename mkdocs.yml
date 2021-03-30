@@ -47,6 +47,7 @@ nav:
     - API Reference:
           - hagerstrand module: hagerstrand.md
           - dataprocess module: dataprocess.md
+          - common module: common.md
     - Notebooks:
           - notebooks/Basic_Mapping.ipynb
           - notebooks/convert_json_to_geojson.ipynb
