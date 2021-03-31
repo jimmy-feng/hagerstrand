@@ -6,4 +6,3 @@ geopandas
 shapely
 earthengine-api
 scikit-learn
-ee
