@@ -1,9 +1,14 @@
 """Main module for the hagerstrand package."""
 import os
 import ipyleaflet
+import ee
+import box
 from ipyleaflet import FullScreenControl, LayersControl, DrawControl, MeasureControl, ScaleControl, TileLayer, basemaps, basemap_to_tiles
 from sklearn.neighbors import BallTree
 import numpy as np
+from .utils import random_string
+from .common import ee_initialize, tool_template
+from .toolbar import main_toolbar
 
 
 # Credit: Dr. Qiusheng Wu
@@ -37,6 +42,7 @@ class Map(ipyleaflet.Map):
         self.add_control(MeasureControl())
         self.add_control(ScaleControl(position="bottomleft"))
 
+        main_toolbar(self)
 
         if "google_map" not in kwargs:
             layer = TileLayer(
@@ -134,6 +140,204 @@ class Map(ipyleaflet.Map):
         geojson = gmapjson_to_geojson(in_json)
         self.add_geojson(geojson, style=style, layer_name=layer_name)
 
+    # Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
+    def set_center(self, lon, lat, zoom=None):
+        """Centers the map view at a given coordinates with the given zoom level. Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
+        Args:
+            lon (float): The longitude of the center, in degrees.
+            lat (float): The latitude of the center, in degrees.
+            zoom (int, optional): The zoom level, from 1 to 24. Defaults to None.
+        """
+        self.center = (lat, lon)
+        if zoom is not None:
+            self.zoom = zoom
+
+    setCenter = set_center
+
+    # Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
+    def center_object(self, ee_object, zoom=None):
+        """Centers the map view on a given object. Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
+        Args:
+            ee_object (Element|Geometry): An Earth Engine object to center on a geometry, image or feature.
+            zoom (int, optional): The zoom level, from 1 to 24. Defaults to None.
+        """
+        if zoom is None and hasattr(self, "fit_bounds"):
+            self.zoom_to_object(ee_object)
+        else:
+            lat = 0
+            lon = 0
+            if isinstance(ee_object, ee.geometry.Geometry):
+                centroid = ee_object.centroid(1)
+                lon, lat = centroid.getInfo()["coordinates"]
+            else:
+                try:
+                    centroid = ee_object.geometry().centroid(1)
+                    lon, lat = centroid.getInfo()["coordinates"]
+                except Exception as e:
+                    print(e)
+                    raise Exception(e)
+
+            self.setCenter(lon, lat, zoom)
+
+    centerObject = center_object
+
+    # Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
+
+    def add_ee_layer(
+        self, ee_object, vis_params={}, name=None, shown=True, opacity=1.0
+    ):
+        """Adds a given EE object to the map as a layer. Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
+        Args:
+            ee_object (Collection|Feature|Image|MapId): The object to add to the map.
+            vis_params (dict, optional): The visualization parameters. Defaults to {}.
+            name (str, optional): The name of the layer. Defaults to 'Layer N'.
+            shown (bool, optional): A flag indicating whether the layer should be on by default. Defaults to True.
+            opacity (float, optional): The layer's opacity represented as a number between 0 and 1. Defaults to 1.
+        """
+        from box import Box
+
+        image = None
+        if name is None:
+            layer_count = len(self.layers)
+            name = "Layer " + str(layer_count + 1)
+
+        if (
+            not isinstance(ee_object, ee.Image)
+            and not isinstance(ee_object, ee.ImageCollection)
+            and not isinstance(ee_object, ee.FeatureCollection)
+            and not isinstance(ee_object, ee.Feature)
+            and not isinstance(ee_object, ee.Geometry)
+        ):
+            err_str = "\n\nThe image argument in 'addLayer' function must be an instace of one of ee.Image, ee.Geometry, ee.Feature or ee.FeatureCollection."
+            raise AttributeError(err_str)
+
+        if (
+            isinstance(ee_object, ee.geometry.Geometry)
+            or isinstance(ee_object, ee.feature.Feature)
+            or isinstance(ee_object, ee.featurecollection.FeatureCollection)
+        ):
+            features = ee.FeatureCollection(ee_object)
+
+            width = 2
+
+            if "width" in vis_params:
+                width = vis_params["width"]
+
+            color = "000000"
+
+            if "color" in vis_params:
+                color = vis_params["color"]
+
+            image_fill = features.style(**{"fillColor": color}).updateMask(
+                ee.Image.constant(0.5)
+            )
+            image_outline = features.style(
+                **{"color": color, "fillColor": "00000000", "width": width}
+            )
+
+            image = image_fill.blend(image_outline)
+        elif isinstance(ee_object, ee.image.Image):
+            image = ee_object
+        elif isinstance(ee_object, ee.imagecollection.ImageCollection):
+            image = ee_object.mosaic()
+
+        if "palette" in vis_params and isinstance(vis_params["palette"], Box):
+            try:
+                vis_params["palette"] = vis_params["palette"]["default"]
+            except Exception as e:
+                print("The provided palette is invalid.")
+                raise Exception(e)
+
+        map_id_dict = ee.Image(image).getMapId(vis_params)
+        tile_layer = TileLayer(
+            url=map_id_dict["tile_fetcher"].url_format,
+            attribution="Google Earth Engine",
+            name=name,
+            opacity=opacity,
+            visible=shown,
+        )
+
+        layer = self.find_layer(name=name)
+        if layer is not None:
+
+            existing_object = self.ee_layer_dict[name]["ee_object"]
+
+            if isinstance(existing_object, ee.Image) or isinstance(
+                existing_object, ee.ImageCollection
+            ):
+                self.ee_raster_layers.remove(existing_object)
+                self.ee_raster_layer_names.remove(name)
+                if self.plot_dropdown_widget is not None:
+                    self.plot_dropdown_widget.options = list(self.ee_raster_layer_names)
+            elif (
+                isinstance(ee_object, ee.Geometry)
+                or isinstance(ee_object, ee.Feature)
+                or isinstance(ee_object, ee.FeatureCollection)
+            ):
+                self.ee_vector_layers.remove(existing_object)
+                self.ee_vector_layer_names.remove(name)
+
+            self.ee_layers.remove(existing_object)
+            self.ee_layer_names.remove(name)
+            self.remove_layer(layer)
+
+        self.ee_layers.append(ee_object)
+        if name not in self.ee_layer_names:
+            self.ee_layer_names.append(name)
+        self.ee_layer_dict[name] = {
+            "ee_object": ee_object,
+            "ee_layer": tile_layer,
+            "vis_params": vis_params,
+        }
+
+        self.add_layer(tile_layer)
+
+        if isinstance(ee_object, ee.Image) or isinstance(ee_object, ee.ImageCollection):
+            self.ee_raster_layers.append(ee_object)
+            self.ee_raster_layer_names.append(name)
+            if self.plot_dropdown_widget is not None:
+                self.plot_dropdown_widget.options = list(self.ee_raster_layer_names)
+        elif (
+            isinstance(ee_object, ee.Geometry)
+            or isinstance(ee_object, ee.Feature)
+            or isinstance(ee_object, ee.FeatureCollection)
+        ):
+            self.ee_vector_layers.append(ee_object)
+            self.ee_vector_layer_names.append(name)
+
+    addLayer = add_ee_layer
+
+    def find_layer(self, name):
+        """Finds layer by name. Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
+        Args:
+            name (str): Name of the layer to find.
+        Returns:
+            object: ipyleaflet layer object.
+        """
+        layers = self.layers
+
+        for layer in layers:
+            if layer.name == name:
+                return layer
+
+        return None
+
+    def find_layer_index(self, name):
+        """Finds layer index by name. Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
+        Args:
+            name (str): Name of the layer to find.
+        Returns:
+            int: Index of the layer with the specified name
+        """
+        layers = self.layers
+
+        for index, layer in enumerate(layers):
+            if layer.name == name:
+                return index
+
+        return -1
+
+
 # Credit: Dr. Qiusheng Wu
 def shp_to_geojson(in_shp, out_geojson=None):
     """Converts a shapefile to GeoJSON.
@@ -218,6 +422,72 @@ def gmapjson_to_geojson(in_gmapjson, out_gmapgeojson=None):
             os.makedirs(out_dir)
         with open(out_gmapgeojson, "w") as f:
             f.write(json.dumps(geojson)) 
+
+
+def ee_tile_layer(
+    ee_object, vis_params={}, name="Layer untitled", shown=True, opacity=1.0
+):
+    """Converts and Earth Engine layer to ipyleaflet TileLayer.
+    Args:
+        ee_object (Collection|Feature|Image|MapId): The object to add to the map.
+        vis_params (dict, optional): The visualization parameters. Defaults to {}.
+        name (str, optional): The name of the layer. Defaults to 'Layer untitled'.
+        shown (bool, optional): A flag indicating whether the layer should be on by default. Defaults to True.
+        opacity (float, optional): The layer's opacity represented as a number between 0 and 1. Defaults to 1.
+    """
+
+    image = None
+
+    if (
+        not isinstance(ee_object, ee.Image)
+        and not isinstance(ee_object, ee.ImageCollection)
+        and not isinstance(ee_object, ee.FeatureCollection)
+        and not isinstance(ee_object, ee.Feature)
+        and not isinstance(ee_object, ee.Geometry)
+    ):
+        err_str = "\n\nThe image argument in 'addLayer' function must be an instace of one of ee.Image, ee.Geometry, ee.Feature or ee.FeatureCollection."
+        raise AttributeError(err_str)
+
+    if (
+        isinstance(ee_object, ee.geometry.Geometry)
+        or isinstance(ee_object, ee.feature.Feature)
+        or isinstance(ee_object, ee.featurecollection.FeatureCollection)
+    ):
+        features = ee.FeatureCollection(ee_object)
+
+        width = 2
+
+        if "width" in vis_params:
+            width = vis_params["width"]
+
+        color = "000000"
+
+        if "color" in vis_params:
+            color = vis_params["color"]
+
+        image_fill = features.style(**{"fillColor": color}).updateMask(
+            ee.Image.constant(0.5)
+        )
+        image_outline = features.style(
+            **{"color": color, "fillColor": "00000000", "width": width}
+        )
+
+        image = image_fill.blend(image_outline)
+    elif isinstance(ee_object, ee.image.Image):
+        image = ee_object
+    elif isinstance(ee_object, ee.imagecollection.ImageCollection):
+        image = ee_object.mosaic()
+
+    map_id_dict = ee.Image(image).getMapId(vis_params)
+    tile_layer = TileLayer(
+        url=map_id_dict["tile_fetcher"].url_format,
+        attribution="Google Earth Engine",
+        name=name,
+        opacity=opacity,
+        visible=shown,
+    )
+    return tile_layer
+
 
 def poly_centroid(in_poly_shp, orig_epsg=6576, change_crs=False, epsg=6576, out_shp=None):
     """Calculates the centroid of all polygons in a file or DataFrame or GeoDataFrame.
