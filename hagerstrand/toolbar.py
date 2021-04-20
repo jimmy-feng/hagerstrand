@@ -135,6 +135,8 @@ def main_toolbar(m):
                 m.add_shapefile(fc.selected, layer_name="Shapefile")
             elif fc.selected.endswith(".geojson"):
                 m.add_geojson(fc.selected, layer_name="GeoJSON")
+            elif fc.selected.endswith(".json"):
+                m.add_geojson(fc.selected, layer_name="GeoJSON")
         elif change["new"] == "Reset":
             fc.reset()
         elif change["new"] == "Close":
@@ -173,7 +175,6 @@ def main_toolbar(m):
     dropdown_basemap.observe(on_click, "value")
 
     def close_click(change):
-        m.toolbar_reset()
         if m.basemap_ctrl is not None and m.basemap_ctrl in m.controls:
             m.remove_control(m.basemap_ctrl)
         basemap_widget.close()
@@ -182,6 +183,15 @@ def main_toolbar(m):
 
     basemap_control = WidgetControl(widget=basemap_widget, position="topright")
     m.basemap_ctrl = basemap_control
+
+    # Query GeoJSON Widget
+    def show_df(value):
+        print([value])
+#    dropdown_query = widgets.Dropdown(
+#        options=list(),
+#        value='470930001001',
+#        description='Census Block Group:'
+#    )   
 
     def tool_click(b):    
         with output:

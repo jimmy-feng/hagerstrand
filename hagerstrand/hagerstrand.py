@@ -3,7 +3,9 @@ import os
 import ipyleaflet
 import ee
 import box
+#import math
 from ipyleaflet import FullScreenControl, LayersControl, DrawControl, MeasureControl, ScaleControl, TileLayer, basemaps, basemap_to_tiles
+#import ipywidgets
 from sklearn.neighbors import BallTree
 import numpy as np
 from .utils import random_string
@@ -41,6 +43,55 @@ class Map(ipyleaflet.Map):
         self.add_control(DrawControl(position="topleft"))
         self.add_control(MeasureControl())
         self.add_control(ScaleControl(position="bottomleft"))
+        self.toolbar = None
+
+        # tools = {
+        #     "folder-open": {
+        #         "name": "open_data",
+        #         "tooltip": "Open local vector/raster data"
+        #     },
+        #     "map": {
+        #         "name": "basemap",
+        #         "tooltip": "Change basemap"
+        #     },
+        #     "gears": {
+        #         "name": "whitebox",
+        #         "tooltip": "WhiteboxTools for local geoprocessing"
+        #     },
+        #     "filter": {
+        #         "name": "query",
+        #         "tooltip": "Attribute selection"
+        #     },
+        # }
+        # icons = list(tools.keys())
+        # tooltips = [item["tooltip"] for item in list(tools.values())]
+
+        # icon_width = "32px"
+        # icon_height = "32px"
+        # n_cols = 3
+        # n_rows = math.ceil(len(icons) / n_cols)
+
+        # toolbar_grid = ipywidgets.GridBox(
+        #     children=[
+        #         ipywidgets.ToggleButton(
+        #             layout=ipywidgets.Layout(
+        #                 width="auto", height="auto", padding="0px 0px 0px 4px"
+        #             ),
+        #             button_style="primary",
+        #             icon=icons[i],
+        #             tooltip=tooltips[i],
+        #         )
+        #         for i in range(len(icons))
+        #     ],
+        #     layout=ipywidgets.Layout(
+        #         width="107px",
+        #         grid_template_columns=(icon_width + " ") * n_cols,
+        #         grid_template_rows=(icon_height + " ") * n_rows,
+        #         grid_gap="1px 1px",
+        #         padding="5px",
+        #     ),
+        # )
+        # self.toolbar = toolbar_grid
 
         main_toolbar(self)
 
@@ -335,6 +386,12 @@ class Map(ipyleaflet.Map):
                 return index
 
         return -1
+
+    def toolbar_reset(self):
+        """Reset the toolbar so that no tool is selected. Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py"""
+        toolbar_grid = self.toolbar
+        for tool in toolbar_grid.children:
+            tool.value = False
 
 
 # Credit: Dr. Qiusheng Wu
