@@ -2,7 +2,7 @@
 
 __author__ = """Jimmy Feng"""
 __email__ = 'jfeng1996@gmail.com'
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
 from .hagerstrand import *
 from .dataprocess import *
