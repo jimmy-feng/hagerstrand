@@ -271,7 +271,7 @@ class Map(ipyleaflet.Map):
                     self.plot_dropdown_widget.options = list(self.ee_raster_layer_names)
             elif (
                 isinstance(ee_object, ee.Geometry)
-                or isinstance(ee_object, ee.Feature) ollection)
+                or isinstance(ee_object, ee.FeatureCollection)
             ):
                 self.ee_vector_layers.remove(existing_object)
                 self.ee_vector_layer_names.remove(name)

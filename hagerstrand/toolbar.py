@@ -181,7 +181,6 @@ def main_toolbar(m):
     close_button_basemap.on_click(close_click)
 
     basemap_control = WidgetControl(widget=basemap_widget, position="topright")
- #   m.add_control(basemap_control)
     m.basemap_ctrl = basemap_control
 
     def tool_click(b):    
