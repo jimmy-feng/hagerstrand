@@ -4,10 +4,10 @@ import ipywidgets as widgets
 import hagerstrand as hs
 
 class ExtendedDataFrame(pd.DataFrame):
-    """This ExtendedDataFrame class inherits the pandas DataFrame class.
+    """This ExtendedDataFrame class inherits the pandas DataFrame class
 
     Args:
-        pd (pd.DataFrame()): A pandas DataFrame.
+        pd (pd.DataFrame()): A pandas DataFrame
     """
     def __init__(self, *args, **kwargs):    
  #       super(ExtendedDataFrame, self).__init__(*args, **kwargs)   
@@ -173,3 +173,50 @@ def unique_sorted_columns_plus_ALL(gj):
 
     else:
         raise TypeError("The provided argument for gj must be of type json.") 
+
+
+def filter_df_widget(df, field):
+    """Widget for filtering a DataFrame
+
+    Args:
+        df (pd.DataFrame): A DataFrame to filter
+        field (str): A field within the DataFrame for the filter criterion
+    """
+    
+    dropdown_field = widgets.Dropdown(
+        options = unique_sorted_values_plus_ALL(df[field]),
+        value="ALL",
+        layout=widgets.Layout(width="200px"),
+        description=field
+    )
+
+    close_dropdown_field = widgets.Button(
+        icon="times",
+        tooltip="Close the filter widget",
+        button_style="primary",
+        layout=widgets.Layout(width="32px")
+    )
+
+    filter_widget = widgets.HBox([dropdown_field, close_dropdown_field])
+
+    out_field = widgets.Output()
+
+    def on_click_dropdown(change):
+        with out_field:
+            out_field.clear_output()
+            if (change.new == 'ALL'):
+                display(df)
+            else:
+                display(df[df[field] == change.new])
+
+    dropdown_field.observe(on_click_dropdown, names="value")
+
+    def close_click_dropdown(change):
+        filter_widget.close()
+    
+    close_dropdown_field.on_click(close_click_dropdown)
+    
+    display(filter_widget)
+    display(out_field)
+
+# Come back to this: https://stackoverflow.com/questions/42562895/return-dataframe-using-ipywidgets-button

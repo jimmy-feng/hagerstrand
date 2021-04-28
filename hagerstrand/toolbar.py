@@ -246,7 +246,6 @@ def main_toolbar(m):
     basemap_control = WidgetControl(widget=basemap_widget, position="topright")
     m.basemap_ctrl = basemap_control
 
-
     # Select Layer for Filtering Widget
     layers = [layer.name for layer in m.layers if not isinstance(layer, ipyleaflet.TileLayer)]
 
@@ -295,6 +294,9 @@ def main_toolbar(m):
     out_click_add_filter_layer = widgets.Output()
 
     def click_add_filter_layer(change):
+ #       with out_click_add_filter_layer:
+ #           out_click_add_filter_layer.clear_output()
+#        if change['new']:
             
         import itertools
         import copy
@@ -302,6 +304,8 @@ def main_toolbar(m):
         data = copy.deepcopy(m.find_layer(dropdown_layer.value).data)
         filter_data = [record for record in data['features'] if record['properties'][dropdown_layer_field.value] == dropdown_layer_field_value.value]
         data['features'] = filter_data
+        #filter_data = [record for record in m.find_layer(dropdown_layer.value).data['features'] if record['properties'][dropdown_layer_field.value] == dropdown_layer_field_value.value]
+        #filter_data_dict = {key: value for key, value in enumerate(filter_data)}
 
         style = {
             "stroke": True,
@@ -324,6 +328,9 @@ def main_toolbar(m):
         )
 
         m.add_layer(geojson)
+                    #geo_json = ipyleaflet.GeoJSON(data=m.find_layer(change.new).data['features'])
+                #m.add_layer(geo_json)
+ #           filter_widget.close()
 
     add_filter_layer.on_click(click_add_filter_layer)
 
@@ -348,9 +355,19 @@ def main_toolbar(m):
     
     close_dropdown_layer.on_click(close_click_dropdown)
     
+ #   close_dropdown_field.on_click(close_click_dropdown)
+
+ #   out = widgets.interactive_output(
+ #       change_parameters,
+ #       {'layer': dropdown_layer,
+ #       'field': dropdown_layer_field
+ #       }
+ #       )
+
+ #   select_layer_widget = widgets.HBox([out, close_dropdown_layer])
+    
     filter_layer_control = WidgetControl(widget=filter_widget, position="bottomright")
     m.filter_layer_ctrl = filter_layer_control
-
 
     def tool_click(b):    
         with output:
@@ -361,6 +378,7 @@ def main_toolbar(m):
 
             elif b.icon == "filter":
                 dropdown_layer.options = [layer.name for layer in m.layers if not isinstance(layer, ipyleaflet.TileLayer)]
+ #               dropdown_layer_field.options = list(m.find_layer(dropdown_layer.value).data['features'][0]['properties'].keys())
  #               display(layers)
                 display(filter_widget)
                 m.add_control(filter_layer_control)
@@ -391,6 +409,8 @@ def main_toolbar(m):
 #            elif b.icon == "question":
 
             print(f"You clicked the {b.icon} button")
+
+
 
     for i in range(rows):
         for j in range(cols):
