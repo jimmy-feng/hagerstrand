@@ -50,5 +50,6 @@ nav:
           - common module: common.md
     - Notebooks:
           - notebooks/Basic_Mapping.ipynb
-          - notebooks/convert_json_to_geojson.ipynb
+          - notebooks/Add_Filter_Geo_Map.ipynb
+          - notebooks/Add_GoogleMapsJSON_Map.ipynb
           - notebooks/SafeGraph.ipynb
