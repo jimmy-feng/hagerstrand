@@ -4,6 +4,7 @@ Source: Dr. Qiusheng Wu -- https://github.com/giswqs/geodemo/blob/master/geodemo
 
 import os
 import ipywidgets as widgets
+import ipyleaflet
 from ipyleaflet import WidgetControl
 from ipyfilechooser import FileChooser
 from IPython.display import display
@@ -54,6 +55,67 @@ def change_basemap(m):
     basemap_control = WidgetControl(widget=basemap_widget, position="topright")
     m.add_control(basemap_control)
     m.basemap_ctrl = basemap_control
+
+
+def filter_df_widget(df, field):
+    """Widget for filtering a DataFrame
+
+    Args:
+        df (pd.DataFrame): A DataFrame to filter
+        field (str): A field within the DataFrame for the filter criterion
+    """
+    
+    dropdown_field = widgets.Dropdown(
+        options = unique_sorted_values_plus_ALL(df[field]),
+        value="ALL",
+        layout=widgets.Layout(width="200px"),
+        description=field
+    )
+
+    close_dropdown_field = widgets.Button(
+        icon="times",
+        tooltip="Close the filter widget",
+        button_style="primary",
+        layout=widgets.Layout(width="32px")
+    )
+
+    filter_widget = widgets.HBox([dropdown_field, close_dropdown_field])
+
+    out_field = widgets.Output()
+
+    def on_click_dropdown(change):
+        with out_field:
+            out_field.clear_output()
+            if (change.new == 'ALL'):
+                display(df)
+            else:
+                display(df[df[field] == change.new])
+
+    dropdown_field.observe(on_click_dropdown, names="value")
+
+    def close_click_dropdown(change):
+        filter_widget.close()
+    
+    close_dropdown_field.on_click(close_click_dropdown)
+    
+    display(filter_widget)
+    display(out_field)
+
+
+def unique_sorted_values_plus_ALL(array):
+    """Obtain a sorted array of all unique values in an array, including an additional value of 'ALL' to denote all values.
+
+    Args:
+        array (list|pd.Series|np.array): An array of values.
+
+    Returns:
+        list: A sorted array of unique values including an additional value of 'ALL'.
+    """
+    unique = array.unique().tolist()
+    unique.sort()
+    unique.insert(0, 'ALL')
+    return unique
+
 
 def main_toolbar(m):
 
@@ -184,14 +246,111 @@ def main_toolbar(m):
     basemap_control = WidgetControl(widget=basemap_widget, position="topright")
     m.basemap_ctrl = basemap_control
 
-    # Query GeoJSON Widget
-    def show_df(value):
-        print([value])
-#    dropdown_query = widgets.Dropdown(
-#        options=list(),
-#        value='470930001001',
-#        description='Census Block Group:'
-#    )   
+
+    # Select Layer for Filtering Widget
+    layers = [layer.name for layer in m.layers if not isinstance(layer, ipyleaflet.TileLayer)]
+
+    dropdown_layer = widgets.Dropdown(
+        options=layers,
+        description='Layer:'
+    )
+
+    dropdown_layer_field = widgets.Dropdown(
+        description='Field:'
+    )
+
+    dropdown_layer_field_value = widgets.Dropdown(
+        description='Value:'
+    )
+
+    out_filter_layer = widgets.Output()
+
+    def on_click_layer(change):
+        with out_filter_layer:
+            out_filter_layer.clear_output()
+            dropdown_layer_field.options = list(m.find_layer(change.new).data['features'][0]['properties'].keys())
+
+    dropdown_layer.observe(on_click_layer, names="value")
+
+    out_filter_layer_field = widgets.Output()
+
+    def on_click_layer_field(change):
+        with out_filter_layer_field:
+            out_filter_layer_field.clear_output()
+            field_values = set()
+            for record in m.find_layer(dropdown_layer.value).data['features']:
+                field_values.add(record['properties'][dropdown_layer_field.value])
+            dropdown_layer_field_value.options = sorted(field_values)
+
+    dropdown_layer_field.observe(on_click_layer_field, names="value")
+
+
+    add_filter_layer = widgets.Button(
+         icon="plus",
+         tooltip="Add a layer based on the filter options",
+         button_color="lightgreen",
+         layout=widgets.Layout(width="32px")
+    )
+
+    out_click_add_filter_layer = widgets.Output()
+
+    def click_add_filter_layer(change):
+            
+        import itertools
+        import copy
+
+        data = copy.deepcopy(m.find_layer(dropdown_layer.value).data)
+        filter_data = [record for record in data['features'] if record['properties'][dropdown_layer_field.value] == dropdown_layer_field_value.value]
+        data['features'] = filter_data
+
+        style = {
+            "stroke": True,
+            "color": "#000000",
+            "weight": 2,
+            "opacity": 1,
+            "fill": True,
+            "fillColor": "#0000ff",
+            "fillOpacity": 0.4,
+        }
+
+        geojson = ipyleaflet.GeoJSON(
+            data=data,
+            style=style,
+            name="{} - {} - {} Layer".format(
+                dropdown_layer.value,
+                dropdown_layer_field.value,
+                dropdown_layer_field_value.value
+            )
+        )
+
+        m.add_layer(geojson)
+
+    add_filter_layer.on_click(click_add_filter_layer)
+
+    close_dropdown_layer = widgets.Button(
+         icon="times",
+         tooltip="Close the filter widget",
+         button_style="primary",
+         layout=widgets.Layout(width="32px")
+    )
+
+    box_layout = widgets.Layout(display='flex',
+                                flex_flow='row',
+                                align_items='stretch',
+                                width='70%')
+
+    filter_buttons_box = widgets.Box([close_dropdown_layer, add_filter_layer])
+    filter_dropdown_box = widgets.Box([dropdown_layer, dropdown_layer_field, dropdown_layer_field_value])
+    filter_widget = widgets.HBox([filter_dropdown_box, filter_buttons_box])
+
+    def close_click_dropdown(change):
+        filter_widget.close()
+    
+    close_dropdown_layer.on_click(close_click_dropdown)
+    
+    filter_layer_control = WidgetControl(widget=filter_widget, position="bottomright")
+    m.filter_layer_ctrl = filter_layer_control
+
 
     def tool_click(b):    
         with output:
@@ -200,7 +359,11 @@ def main_toolbar(m):
                 display(filechooser_widget)
                 m.add_control(output_ctrl)
 
- #           elif b.icon == "filter":
+            elif b.icon == "filter":
+                dropdown_layer.options = [layer.name for layer in m.layers if not isinstance(layer, ipyleaflet.TileLayer)]
+ #               display(layers)
+                display(filter_widget)
+                m.add_control(filter_layer_control)
 
             elif b.icon == "map":
                 display(basemap_widget)

@@ -8,9 +8,12 @@ from ipyleaflet import FullScreenControl, LayersControl, DrawControl, MeasureCon
 #import ipywidgets
 from sklearn.neighbors import BallTree
 import numpy as np
+import pandas as pd
+import geopandas as gpd
+import json
 from .utils import random_string
 from .common import ee_initialize, tool_template
-from .toolbar import main_toolbar
+from .toolbar import main_toolbar, filter_df_widget
 
 
 # Credit: Dr. Qiusheng Wu
@@ -93,7 +96,6 @@ class Map(ipyleaflet.Map):
         # )
         # self.toolbar = toolbar_grid
 
-        main_toolbar(self)
 
         if "google_map" not in kwargs:
             layer = TileLayer(
@@ -125,6 +127,7 @@ class Map(ipyleaflet.Map):
             layer = basemap_to_tiles(kwargs["basemap"])
             self.add_layer(layer)
 
+        main_toolbar(self)
 
     def add_geojson(self, in_geojson, style=None, layer_name="Untitled"):
         """Adds a GeoJSON file to the map.
@@ -190,6 +193,17 @@ class Map(ipyleaflet.Map):
         """
         geojson = gmapjson_to_geojson(in_json)
         self.add_geojson(geojson, style=style, layer_name=layer_name)
+
+    def add_gdf(self, in_gdf, style=None, layer_name="Untitled"):
+        """Adds a Pandas DataFrame to the map
+
+        Args:
+            in_gdf (gpd.GeoDataFrame): The GeoPandas GeoDataFrame.
+            style (dict, optional): The style for the GeoDataFrame. Defaults to None.
+            layer_name (str, optional): The layer name for the GeoDataFrame layer. Defaults to "Untitled".
+        """
+        geodata = ipyleaflet.GeoData(geo_dataframe = in_gdf, name=layer_name)
+        self.add_layer(geodata)
 
     # Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
     def set_center(self, lon, lat, zoom=None):
@@ -393,7 +407,6 @@ class Map(ipyleaflet.Map):
         for tool in toolbar_grid.children:
             tool.value = False
 
-
 # Credit: Dr. Qiusheng Wu
 def shp_to_geojson(in_shp, out_geojson=None):
     """Converts a shapefile to GeoJSON.
@@ -480,6 +493,77 @@ def gmapjson_to_geojson(in_gmapjson, out_gmapgeojson=None):
             f.write(json.dumps(geojson)) 
 
 
+def gdf_to_geojson(gdf, out_geojson=None):
+    """Convert a geopandas.GeoDataFrame into a GeoJSON.
+    
+    Args:
+        gdf (gpd.GeoDataFrame): A GeoPandas GeoDataFrame.
+        out_geojson (str): File path to the output GeoJSON.
+
+    Returns:
+        GeoJSON: GeoJSON of a converted pandas DataFrame
+    """
+    
+ #   if not isinstance(gdf, gpd.GeoDataFrame):
+ #       err_str = "\n\nThe gdf argument must be an instance of a gpd.GeoDataFrame"
+ #       raise TypeError(err_str)
+    
+    geojson = gdf.__geo_interface__
+
+    if out_geojson is None:
+        return geojson
+    else:
+        out_geojson = os.path.abspath(out_geojson)
+        out_dir = os.path.dirname(out_geojson)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        with open(out_geojson, "w") as f:
+            f.write(json.dumps(geojson)) 
+
+
+# def df_to_geojson(df, properties=df.columns.tolist(), vector_geom='Point', coords=["latitude","longitude"], out_geojson=None):
+#     """Convert a pandas.DataFrame or geopandas.GeoDataFrame or hagerstrand.ExtendedDataFrame into a GeoJSON.
+#        Source Inspiration: Geoff Boeing -- https://geoffboeing.com/2015/10/exporting-python-data-geojson/
+    
+#     Args:
+#         df (pd.DataFrame): A pandas DataFrame.
+#         properties ([type]): Columns to store as feature attributes.
+#         vector_geom (str, optional): Shapely Geometry type. Defaults to 'Point'.
+#         coords (list, optional): List containing column(s) of coordinates.
+
+#     Returns:
+#         GeoJSON: GeoJSON of a converted pandas DataFrame
+#     """
+    
+#     if isinstance(df, pd.DataFrame):
+#         df = gpd.GeoDataFrame(df.copy())
+
+#    geojson = {'type':'FeatureCollection', 'features':[]}
+
+#    if vector_geom == "Point":
+#        for _, row in df.iterrows():
+#            feature = {'type':'Feature',
+#                    'properties':{},
+#                    'geometry':{'type':vector_geom,
+#                                'coordinates':[]}}
+#            feature['geometry']['coordinates'] = [row[1],row[0]]
+#            for prop in properties:
+#                feature['properties'][prop] = row[prop]
+#            geojson['features'].append(feature)
+#    else:
+#     geojson = df.__geo_interface__
+
+#     if out_geojson is None:
+#         return geojson
+#     else:
+#         out_geojson = os.path.abspath(out_geojson)
+#         out_dir = os.path.dirname(out_geojson)
+#         if not os.path.exists(out_dir):
+#             os.makedirs(out_dir)
+#         with open(out_geojson, "w") as f:
+#             f.write(json.dumps(geojson)) 
+
+
 def ee_tile_layer(
     ee_object, vis_params={}, name="Layer untitled", shown=True, opacity=1.0
 ):
@@ -501,7 +585,7 @@ def ee_tile_layer(
         and not isinstance(ee_object, ee.Feature)
         and not isinstance(ee_object, ee.Geometry)
     ):
-        err_str = "\n\nThe image argument in 'addLayer' function must be an instace of one of ee.Image, ee.Geometry, ee.Feature or ee.FeatureCollection."
+        err_str = "\n\nThe image argument in 'addLayer' function must be an instance of one of ee.Image, ee.Geometry, ee.Feature or ee.FeatureCollection."
         raise AttributeError(err_str)
 
     if (

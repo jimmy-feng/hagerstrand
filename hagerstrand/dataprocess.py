@@ -1,5 +1,7 @@
 import pandas as pd
 import json
+import ipywidgets as widgets
+import hagerstrand as hs
 
 class ExtendedDataFrame(pd.DataFrame):
     """This ExtendedDataFrame class inherits the pandas DataFrame class
@@ -8,11 +10,12 @@ class ExtendedDataFrame(pd.DataFrame):
         pd (pd.DataFrame()): A pandas DataFrame
     """
     def __init__(self, *args, **kwargs):    
-        super(ExtendedDataFrame, self).__init__(*args, **kwargs)   
-    
-    @property
-    def _constructor(self):
-        return ExtendedDataFrame
+ #       super(ExtendedDataFrame, self).__init__(*args, **kwargs)   
+        super().__init__(*args, **kwargs)
+
+ #   @property
+ #   def _constructor(self):
+ #       return ExtendedDataFrame
 
     def deduplicate(self, columns=None):
         """Drops duplicate records and resets the index of the ExtendedDataFrame
@@ -82,7 +85,7 @@ def unpack_json(df, json_column='visitor_home_cbgs', index_name= None, key_col_n
     """    
     import numpy as np
     
-    # these checks are a inefficent for multithreading, but it's not a big deal
+    # these checks are inefficent for multithreading, but it's not a big deal
     if key_col_name is None:
         key_col_name = json_column + '_key'
     if value_col_name is None:
@@ -135,3 +138,38 @@ def unpack_json_and_merge(df, json_column='visitor_home_cbgs', key_col_name='vis
     df_exp = unpack_json(df, json_column=json_column, key_col_name=key_col_name, value_col_name=value_col_name)
     df = df.merge(df_exp, left_index=True, right_index=True).reset_index(drop=True)
     return df
+
+
+def unique_sorted_values_plus_ALL(array):
+    """Obtain a sorted array of all unique values in an array, including an additional value of 'ALL' to denote all values.
+
+    Args:
+        array (list|pd.Series|np.array): An array of values.
+
+    Returns:
+        list: A sorted array of unique values including an additional value of 'ALL'.
+    """
+    unique = array.unique().tolist()
+    unique.sort()
+    unique.insert(0, 'ALL')
+    return unique
+
+
+def unique_sorted_columns_plus_ALL(gj):
+    """Obtain a sorted array of all columns in a GeoJSON, including an additional value of 'ALL' to denote all values.
+
+    Args:
+        gj (GeoJSON): A GeoJSON.
+
+    Returns:
+        list: A sorted array of unique column names including an additional value of 'ALL'.
+    """
+    if isinstance(gj, json):
+        array = gpd.GeoDataFrame.from_features(gj)
+        unique = array.unique().tolist()
+        unique.sort()
+        unique.insert(0, 'ALL')
+        return unique
+
+    else:
+        raise TypeError("The provided argument for gj must be of type json.") 
