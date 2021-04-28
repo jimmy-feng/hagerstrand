@@ -705,7 +705,10 @@ def csv_to_gdf(in_csv, index_col=None, latloncols=["latitude","longitude"], in_e
     poi["xcoord"] = poi[latloncols[1]].astype(float)
     epsg_i = "epsg:" + str(in_epsg)
     poi = gpd.GeoDataFrame(
-        poi, geometry = [Point(x,y) for x, y in zip(poi.xcoord, poi.ycoord)], crs = epsg_i)
+        poi,
+        geometry = [Point(x,y) for x, y in zip(poi.xcoord, poi.ycoord)],
+        crs = epsg_i
+    )
     
     epsg_o = "epsg:" + str(out_epsg)
     poi = poi.to_crs({"init":epsg_o})

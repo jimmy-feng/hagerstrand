@@ -8,7 +8,7 @@ import ipyleaflet
 from ipyleaflet import WidgetControl
 from ipyfilechooser import FileChooser
 from IPython.display import display
-
+from .dataprocess import unique_sorted_values_plus_ALL
 
 def change_basemap(m):
     """Widget for change basemaps. Source: Dr. Qiusheng Wu -- https://github.com/giswqs/geemap/blob/master/geemap/toolbar.py
@@ -100,21 +100,6 @@ def filter_df_widget(df, field):
     
     display(filter_widget)
     display(out_field)
-
-
-def unique_sorted_values_plus_ALL(array):
-    """Obtain a sorted array of all unique values in an array, including an additional value of 'ALL' to denote all values.
-
-    Args:
-        array (list|pd.Series|np.array): An array of values.
-
-    Returns:
-        list: A sorted array of unique values including an additional value of 'ALL'.
-    """
-    unique = array.unique().tolist()
-    unique.sort()
-    unique.insert(0, 'ALL')
-    return unique
 
 
 def main_toolbar(m):
