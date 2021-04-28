@@ -392,8 +392,6 @@ def main_toolbar(m):
 
             print(f"You clicked the {b.icon} button")
 
-
-
     for i in range(rows):
         for j in range(cols):
             tool = grid[i, j]

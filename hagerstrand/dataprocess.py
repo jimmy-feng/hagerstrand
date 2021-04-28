@@ -4,10 +4,10 @@ import ipywidgets as widgets
 import hagerstrand as hs
 
 class ExtendedDataFrame(pd.DataFrame):
-    """This ExtendedDataFrame class inherits the pandas DataFrame class
+    """This ExtendedDataFrame class inherits the pandas DataFrame class.
 
     Args:
-        pd (pd.DataFrame()): A pandas DataFrame
+        pd (pd.DataFrame()): A pandas DataFrame.
     """
     def __init__(self, *args, **kwargs):    
  #       super(ExtendedDataFrame, self).__init__(*args, **kwargs)   

@@ -247,10 +247,7 @@ class Map(ipyleaflet.Map):
     centerObject = center_object
 
     # Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
-
-    def add_ee_layer(
-        self, ee_object, vis_params={}, name=None, shown=True, opacity=1.0
-    ):
+    def add_ee_layer(self, ee_object, vis_params={}, name=None, shown=True, opacity=1.0):
         """Adds a given EE object to the map as a layer. Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
         Args:
             ee_object (Collection|Feature|Image|MapId): The object to add to the map.
@@ -564,9 +561,7 @@ def gdf_to_geojson(gdf, out_geojson=None):
 #             f.write(json.dumps(geojson)) 
 
 
-def ee_tile_layer(
-    ee_object, vis_params={}, name="Layer untitled", shown=True, opacity=1.0
-):
+def ee_tile_layer(ee_object, vis_params={}, name="Layer untitled", shown=True, opacity=1.0):
     """Converts and Earth Engine layer to ipyleaflet TileLayer.
     Args:
         ee_object (Collection|Feature|Image|MapId): The object to add to the map.
