@@ -203,7 +203,6 @@ class Map(ipyleaflet.Map):
             layer_name (str, optional): The layer name for the GeoDataFrame layer. Defaults to "Untitled".
         """
         geodata = ipyleaflet.GeoData(geo_dataframe = in_gdf, name=layer_name)
-        #geojson = gdf_to_geojson(in_gdf)
         self.add_layer(geodata)
 
     # Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py

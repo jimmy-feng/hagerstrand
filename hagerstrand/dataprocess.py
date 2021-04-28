@@ -12,7 +12,6 @@ class ExtendedDataFrame(pd.DataFrame):
     """
 
     def __init__(self, *args, **kwargs):
-        #       super(ExtendedDataFrame, self).__init__(*args, **kwargs)
         super().__init__(*args, **kwargs)
 
     #   @property
