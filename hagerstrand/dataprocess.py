@@ -66,7 +66,7 @@ def load_json_nan(df, json_col):
         json_col (str): The JSON column to be loaded.
 
     Returns:
-        [type]: [description]
+        df (pd.Series): A pd.Series of a JSON column
     """
     return df[json_col].apply(lambda x: json.loads(x) if type(x) == str else x)
 
