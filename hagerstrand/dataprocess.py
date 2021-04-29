@@ -14,9 +14,9 @@ class ExtendedDataFrame(pd.DataFrame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    #   @property
-    #   def _constructor(self):
-    #       return ExtendedDataFrame
+    @property
+    def _constructor(self):
+        return ExtendedDataFrame
 
     def deduplicate(self, columns=None):
         """Drops duplicate records and resets the index of the ExtendedDataFrame
