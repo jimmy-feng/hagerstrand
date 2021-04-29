@@ -1,0 +1,4 @@
+ 
+# basemaps module
+
+::: hagerstrand.basemaps

@@ -48,6 +48,9 @@ nav:
           - hagerstrand module: hagerstrand.md
           - dataprocess module: dataprocess.md
           - common module: common.md
+          - toolbar module: toolbar.md
+          - utils module: utils.md
+          - basemaps module: basemaps.md
     - Notebooks:
           - notebooks/Basic_Mapping.ipynb
           - notebooks/Add_Filter_Geo_Map.ipynb

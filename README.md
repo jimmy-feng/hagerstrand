@@ -46,7 +46,12 @@ conda search hagerstrand --channel conda-forge
 ```
 ## Features
 
--   In the works!
+- Create an interactive map
+- Add local datasets (e.g. GeoJSON, JSON, Shapefile) to the map either through code or GUI
+- Add pandas DataFrames and GeoPandas GeoDataFrames to the map
+- Use a widget for quick viewing of filtered results of a pd.DataFrame
+- Filter any non-TileLayer in the map by a unique value in a field/column
+- Process SafeGraph data and unpack json columns into an existing or a new DataFrame 
 
 ## Credits
 
