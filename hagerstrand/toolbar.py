@@ -9,6 +9,7 @@ from ipyleaflet import WidgetControl
 from ipyfilechooser import FileChooser
 from IPython.display import display
 from .dataprocess import unique_sorted_values_plus_ALL
+from .utils import random_string
 
 def change_basemap(m):
     """Widget for change basemaps. Source: Dr. Qiusheng Wu -- https://github.com/giswqs/geemap/blob/master/geemap/toolbar.py
@@ -132,10 +133,10 @@ def main_toolbar(m):
     close_button.observe(close_click, "value")
 
     rows = 2
-    cols = 2
-    grid = widgets.GridspecLayout(rows, cols, grid_gap="0px", layout=widgets.Layout(width="62px"))
+    cols = 3
+    grid = widgets.GridspecLayout(rows, cols, grid_gap="0px", layout=widgets.Layout(width="96px"))
 
-    icons = ["folder-open", "map", "gears", "filter"]
+    icons = ["folder-open", "map", "gears", "filter", "map-marker", "question"]
 
     for i in range(rows):
         for j in range(cols):
@@ -335,6 +336,41 @@ def main_toolbar(m):
     filter_layer_control = WidgetControl(widget=filter_widget, position="bottomright")
     m.filter_layer_ctrl = filter_layer_control
 
+
+    # Add CSV Widget
+    buttons_csv = widgets.ToggleButtons(
+        value=None,
+        options=["Display", "Close"],
+        tooltips=["Display", "Close"],
+        button_style="primary",
+    )
+    buttons_csv.style.button_width = "80px"
+    
+    layer_name_csv = widgets.Text(
+        value="Untitled" + random_string(),
+        placeholder="Type the layer name here",
+        description="Layer name:",
+        disabled=False
+    )
+    
+    #observe(layer_name_csv, "value")
+
+    fc_csv = FileChooser(data_dir)
+    fc_csv.use_dir_icons = True
+    fc_csv.filter_pattern = ['*.csv']
+
+    add_csv_widget = widgets.VBox([fc_csv, layer_name_csv, buttons_csv])
+
+    def button_click_csv(change):
+        if change["new"] == "Display" and fc_csv.selected is not None:
+            layer_name = "RandomForNow"
+            m.add_points_from_csv(fc_csv.selected, layer_name=layer_name)
+        elif change["new"] == "Close":
+            fc_csv.reset()
+            m.remove_control(output_ctrl)
+    buttons_csv.observe(button_click_csv, "value")
+
+
     def tool_click(b):    
         with output:
             output.clear_output()
@@ -371,6 +407,9 @@ def main_toolbar(m):
                 m.whitebox = wbt_control
                 m.add_control(wbt_control)
 
+            elif b.icon == "map-marker":
+                display(add_csv_widget)
+                m.add_control(output_ctrl)
 #            elif b.icon == "question":
 
             print(f"You clicked the {b.icon} button")

@@ -4,7 +4,7 @@ import ipyleaflet
 import ee
 import box
 #import math
-from ipyleaflet import FullScreenControl, LayersControl, DrawControl, MeasureControl, ScaleControl, TileLayer, basemaps, basemap_to_tiles
+from ipyleaflet import FullScreenControl, LayersControl, DrawControl, MeasureControl, ScaleControl, TileLayer, basemaps, basemap_to_tiles, Marker, MarkerCluster
 #import ipywidgets
 from sklearn.neighbors import BallTree
 import numpy as np
@@ -202,8 +202,16 @@ class Map(ipyleaflet.Map):
             style (dict, optional): The style for the GeoDataFrame. Defaults to None.
             layer_name (str, optional): The layer name for the GeoDataFrame layer. Defaults to "Untitled".
         """
-        geodata = ipyleaflet.GeoData(geo_dataframe = in_gdf, name=layer_name)
+        geodata = ipyleaflet.GeoData(geo_dataframe=in_gdf, name=layer_name)
         self.add_layer(geodata)
+    
+    def add_points_from_csv(self, in_csv, x="longitude", y="latitude", label=None, layer_name="Marker cluster"):
+        # COME BACK TO THIS: https://carpentries-incubator.github.io/jupyter_maps/03-vector/index.html
+        # TO-DO: ADD POP UPS
+        points = csv_to_geojson(in_csv=in_csv, x=x, y=y)
+        markers = [Marker(location=record['geometry']['coordinates']) for record in points['features']]
+        marker_cluster = MarkerCluster(markers=markers,name=layer_name)
+        self.add_layer(marker_cluster)
 
     # Source: Dr. Qiusheng Wu: https://github.com/giswqs/geemap/blob/master/geemap/geemap.py
     def set_center(self, lon, lat, zoom=None):
@@ -438,6 +446,83 @@ def shp_to_geojson(in_shp, out_geojson=None):
             os.makedirs(out_dir)
         with open(out_geojson, "w") as f:
             f.write(json.dumps(geojson))    
+
+
+def csv_to_geojson(in_csv, out_geojson=None, x="longitude", y="latitude"):
+    """Convert a comma separated values file to a GeoJSON.
+
+    Args:
+        in_csv ([type]): Input file path of the CSV.
+        out_geojson ([type], optional): Output file path of the GeoJSON. Defaults to None.
+        x (str, optional): Column name for the x coordinate. Defaults to "longitude".
+        y (str, optional): Column name for the y coordinate. Defaults to "latitude".
+
+    Raises:
+        FileNotFoundError: If the provided input file path does not exist.
+
+    Returns:
+        GeoJSON: GeoJSON of a converted CSV.
+    """
+
+    in_csv = os.path.abspath(in_csv)
+
+    if not os.path.exists(in_csv):
+        raise FileNotFoundError("The provided csv could not be founded.")
+
+    df = pd.read_csv(in_csv)
+    gdf = gpd.GeoDataFrame(
+        df,
+        crs = {'init':'epsg:4326'},
+        geometry = gpd.points_from_xy(x=df[x], y=df[y])
+    )
+
+    geojson = gdf.__geo_interface__
+
+    if out_geojson is None:
+        return geojson
+    else:
+        out_geojson = os.path.abspath(out_geojson)
+        out_dir = os.path.dirname(out_geojson)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        with open(out_geojson, "w") as f:
+            f.write(json.dumps(geojson))       
+
+
+def csv_to_shp(in_csv, out_shp, x="longitude", y="latitude"):#, in_crs=4326, out_crs=4326):
+    """Convert a comma separated values file to an ESRI Shapefile.
+
+    Args:
+        in_csv (str): Input file path of the CSV.
+        out_shp (str): Output file path of the shapefile.
+        x (str, optional): Column name for the x coordinate. Defaults to "longitude".
+        y (str, optional): Column name for the y coordinate. Defaults to "latitude".
+
+    Raises:
+        FileNotFoundError: If the provided input file path does not exist.
+        ValueError: If the provided output file path does not end in .shp.
+    """
+    # TO-DO: Add CRS flag and input/output
+    import csv
+
+    in_csv = os.path.abspath(in_csv)
+
+    if not os.path.exists(in_csv):
+        raise FileNotFoundError("The provided csv could not be founded.")
+
+    if out_shp[-3:] != "shp":
+        raise ValueError("The outpath filepath is not specified as a .shp file.")
+
+    df = pd.read_csv(in_csv)
+    gdf = gpd.GeoDataFrame(
+        df,
+        crs = {'init':'epsg:4326'},
+        geometry = gpd.points_from_xy(x=df[x], y=df[y])
+    )
+
+    gdf.to_file(out_shp)
+
+
 
 def gmapjson_to_geojson(in_gmapjson, out_gmapgeojson=None):
     """Converts a Google Map Location History JSON to GeoJSON.
